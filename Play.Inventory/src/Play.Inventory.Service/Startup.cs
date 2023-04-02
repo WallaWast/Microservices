@@ -4,6 +4,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
+using Play.Common.MongoDB;
+using Play.Inventory.Service.Entities;
 
 namespace Play.Inventory.Service
 {
@@ -19,6 +21,9 @@ namespace Play.Inventory.Service
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddMongo()
+                    .AddMongoRepository<InventoryItem>("inventoryitems");
+
             services.AddControllers();
             services.AddSwaggerGen(c =>
             {
