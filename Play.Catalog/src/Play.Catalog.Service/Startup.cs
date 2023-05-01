@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.OpenApi.Models;
 using Play.Catalog.Service.Entities;
+using Play.Common.Identity;
 using Play.Common.MassTransit;
 using Play.Common.MongoDB;
 using Play.Common.Settings;
@@ -34,14 +35,8 @@ namespace Play.Catalog.Service
 
             services.AddMongo()
                     .AddMongoRepository<Item>("items")
-                    .AddMassTransitWithRabbitMq();
-
-            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                    .AddJwtBearer(option =>
-                    {
-                        option.Authority = "https://localhost:5003";
-                        option.Audience = serviceSettings.ServiceName;
-                    });
+                    .AddMassTransitWithRabbitMq()
+                    .AddJwtBearerAuthentication();
 
             services.AddControllers(options =>
             {
