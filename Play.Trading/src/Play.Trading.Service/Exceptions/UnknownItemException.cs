@@ -1,6 +1,6 @@
 using System;
 
-namespace Play.Inventory.Service.Exceptions;
+namespace Play.Trading.Service.Exceptions;
 
 [Serializable]
 internal class UnknownItemException : Exception
