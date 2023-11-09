@@ -45,11 +45,23 @@ public class GrantItemsConsumer : IConsumer<GrantItems>
                 AcquiredDate = DateTimeOffset.UtcNow
             };
 
+            // The ID on the header of the message, case it is a retry will have the same
+            inventoryItem.MessageIds.Add(context.MessageId.Value);
+
             await _inventoryitemsRepository.CreateAsync(inventoryItem);
         }
         else
         {
+            if (inventoryItem.MessageIds.Contains(context.MessageId.Value))
+            {
+                await context.Publish(new InventoryItemsGranted(message.CorrelationId));
+                return;
+            }
+
             inventoryItem.Quantity += message.Quantity;
+            // The ID on the header of the message, case it is a retry will have the same
+            inventoryItem.MessageIds.Add(context.MessageId.Value);
+
             await _inventoryitemsRepository.UpdateAsync(inventoryItem);
         }
 
