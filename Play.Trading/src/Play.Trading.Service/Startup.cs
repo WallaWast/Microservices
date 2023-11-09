@@ -19,8 +19,11 @@ using Play.Common.Identity;
 using Play.Common.MassTransit;
 using Play.Common.MongoDB;
 using Play.Common.Settings;
+using Play.Identity.Contracts;
+using Play.Inventory.Contracts;
 using Play.Trading.Service.Entities;
 using Play.Trading.Service.Exceptions;
+using Play.Trading.Service.Settings;
 using Play.Trading.Service.StateMachines;
 
 namespace Play.Trading.Service
@@ -93,21 +96,32 @@ namespace Play.Trading.Service
                 });
 
                 configure.AddConsumers(Assembly.GetEntryAssembly());
-                configure.AddSagaStateMachine<PurchaseStateMachine, PurchaseState>()
-                        .MongoDbRepository(r =>
-                        {
-                            var serviceSettings = Configuration
-                                                    .GetSection(nameof(ServiceSettings))
-                                                    .Get<ServiceSettings>();
+                configure.AddSagaStateMachine<PurchaseStateMachine, PurchaseState>(sagaConfigurator =>
+                {
+                    sagaConfigurator.UseInMemoryOutbox();
+                })
+                .MongoDbRepository(r =>
+                {
+                    var serviceSettings = Configuration
+                                            .GetSection(nameof(ServiceSettings))
+                                            .Get<ServiceSettings>();
 
-                            var mongoSettings = Configuration
-                                                    .GetSection(nameof(MongoDbSettings))
-                                                    .Get<MongoDbSettings>();
+                    var mongoSettings = Configuration
+                                            .GetSection(nameof(MongoDbSettings))
+                                            .Get<MongoDbSettings>();
 
-                            r.Connection = mongoSettings.ConnectionString;
-                            r.DatabaseName = serviceSettings.ServiceName;
-                        });
+                    r.Connection = mongoSettings.ConnectionString;
+                    r.DatabaseName = serviceSettings.ServiceName;
+                });
             });
+
+            var queueSettings = Configuration
+                                    .GetSection(nameof(QueueSettings))
+                                    .Get<QueueSettings>();
+
+            EndpointConvention.Map<GrantItems>(new Uri(queueSettings.GrantItemsQueueAddress));
+            EndpointConvention.Map<DebitGil>(new Uri(queueSettings.DebitGilQueueAddress));
+            EndpointConvention.Map<SubtractItems>(new Uri(queueSettings.SubtractItemsQueueAddress));
 
             services.AddMassTransitHostedService();
             services.AddGenericRequestClient();
